@@ -1,9 +1,9 @@
 package config
 
 import (
-	"errors"
 	"time"
 
+	"github.com/SleepNFire/mediakeys/ad-serving/pkg"
 	"github.com/kelseyhightower/envconfig"
 )
 
@@ -34,7 +34,7 @@ func Init() (*Config, error) {
 
 	err := envconfig.Process("adserving", &config)
 	if err != nil {
-		return nil, errors.New("failed to read environnement variable")
+		return nil, pkg.ErrEnvironnementVariable
 	}
 
 	return &config, nil

@@ -1,13 +1,23 @@
 package pkg
 
+import "fmt"
+
 type AdvertData struct {
-	Id          string
-	Title       string
-	Description *string
-	Link        string
-	PrintNumber uint64
+	Id          string  `json:"id"`
+	Title       string  `json:"title"`
+	Description *string `json:"description,omitempty"`
+	Link        string  `json:"link"`
 }
 
 func (advert *AdvertData) Validation() error {
+	if advert.Id == "" {
+		return fmt.Errorf("there is no Id")
+	}
+	if advert.Title == "" {
+		return fmt.Errorf("the is no Title")
+	}
+	if advert.Link == "" {
+		return fmt.Errorf("the is no Link")
+	}
 	return nil
 }

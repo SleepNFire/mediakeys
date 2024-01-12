@@ -2,7 +2,6 @@ package data
 
 import (
 	"encoding/json"
-	"errors"
 	"fmt"
 	"net/http"
 
@@ -10,6 +9,7 @@ import (
 	"github.com/SleepNFire/mediakeys/ad-serving/pkg"
 	"github.com/gin-gonic/gin"
 	"github.com/go-redis/redis/v8"
+	"github.com/rs/zerolog/log"
 	"golang.org/x/net/context"
 )
 
@@ -21,13 +21,14 @@ type RedisAccessor struct {
 }
 
 func NewRedisAccessor(globalConf *config.Config) (*RedisAccessor, error) {
+	log.Error().Msg("Redis started")
 	redisAccessor := &RedisAccessor{
 		Config: globalConf.Redis,
 	}
 	client, err := redisAccessor.connectToRedis()
 	if err != nil {
-		fmt.Println("error during connecting to Redis")
-		return nil, errors.New("error during connecting to Redis")
+		log.Error().Err(err).Msg("there is anerror during the connection on redis")
+		return nil, pkg.ErrRedisUnaccessible
 	}
 
 	redisAccessor.Client = client
@@ -54,7 +55,7 @@ func CreateKey(id string) string {
 func (redisAccessor *RedisAccessor) Store(advert *pkg.AdvertData) error {
 	key := CreateKey(advert.Id)
 	if exists, _ := redisAccessor.Client.Exists(context.Background(), key).Result(); exists != 0 {
-		return errors.New("advertisement with the same ID already exists")
+		return pkg.ErrAdvertAlreadyExist
 	}
 
 	advertJSON, err := json.Marshal(advert)
