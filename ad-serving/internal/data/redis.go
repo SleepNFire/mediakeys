@@ -54,17 +54,20 @@ func CreateKey(id string) string {
 
 func (redisAccessor *RedisAccessor) Store(advert *pkg.AdvertData) error {
 	key := CreateKey(advert.Id)
-	if exists, _ := redisAccessor.Client.Exists(context.Background(), key).Result(); exists != 0 {
+	exists, _ := redisAccessor.Client.Exists(context.Background(), key).Result()
+	if exists != 0 {
 		return pkg.ErrAdvertAlreadyExist
 	}
 
 	advertJSON, err := json.Marshal(advert)
 	if err != nil {
+		log.Error().Err(err).Msg("error marshal the json")
 		return err
 	}
 
 	err = redisAccessor.Client.Set(context.Background(), key, string(advertJSON), redisAccessor.Config.Expiration).Err()
 	if err != nil {
+		log.Error().Err(err).Msg("error saving the key with data")
 		return err
 	}
 
@@ -75,14 +78,16 @@ func (redisAccessor *RedisAccessor) Find(id string) (*pkg.AdvertData, error) {
 	key := CreateKey(id)
 	advertJSON, err := redisAccessor.Client.Get(context.Background(), key).Result()
 	if err == redis.Nil {
-		return nil, fmt.Errorf("the id does not exist")
+		return nil, pkg.ErrNotFound
 	} else if err != nil {
+		log.Error().Err(err).Msg("error during retriving the key in redis")
 		return nil, err
 	}
 
 	var advert pkg.AdvertData
 	err = json.Unmarshal([]byte(advertJSON), &advert)
 	if err != nil {
+		log.Error().Err(err).Msg("error unmarshal the json")
 		return nil, err
 	}
 

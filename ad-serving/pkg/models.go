@@ -14,10 +14,10 @@ func (advert *AdvertData) Validation() error {
 		return fmt.Errorf("there is no Id")
 	}
 	if advert.Title == "" {
-		return fmt.Errorf("the is no Title")
+		return fmt.Errorf("there is no Title")
 	}
 	if advert.Link == "" {
-		return fmt.Errorf("the is no Link")
+		return fmt.Errorf("there is no Link")
 	}
 	return nil
 }

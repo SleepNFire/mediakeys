@@ -35,29 +35,29 @@ func (advert *AdvertEndpoint) RegisterEndpoints(router *gin.Engine) {
 func (adEndpoint *AdvertEndpoint) SaveAdvert(c *gin.Context) {
 	ctx := c.Request.Context()
 
-	var advertData *pkg.AdvertData
+	var advertData pkg.AdvertData
 
-	if err := c.ShouldBindJSON(advertData); err != nil {
+	if err := c.ShouldBindJSON(&advertData); err != nil {
 		log.Ctx(ctx).Info().Err(err).Msg("object unknow")
-		c.JSON(http.StatusBadRequest, "object unknown")
+		c.JSON(http.StatusBadRequest, pkg.RestMessage{Message: pkg.ErrObjectUnknown.Error()})
 		return
 	}
 
 	if err := advertData.Validation(); err != nil {
-		log.Ctx(ctx).Info().Err(err).Msg("object unknow")
-		c.JSON(http.StatusBadRequest, err.Error())
+		log.Ctx(ctx).Info().Err(err).Msg("object not valid")
+		c.JSON(http.StatusBadRequest, pkg.RestMessage{Message: err.Error()})
 		return
 	}
 
-	err := adEndpoint.Redis.Store(advertData)
+	err := adEndpoint.Redis.Store(&advertData)
 	if err != nil {
 		switch {
 		case err == pkg.ErrAdvertAlreadyExist:
 			log.Ctx(ctx).Info().Err(err).Msg("The advert already existe")
-			c.JSON(http.StatusBadRequest, err)
+			c.JSON(http.StatusBadRequest, pkg.RestMessage{Message: err.Error()})
 		default:
 			log.Ctx(ctx).Error().Err(err).Msg("object unknow")
-			c.JSON(http.StatusInternalServerError, pkg.ErrInternalError)
+			c.JSON(http.StatusInternalServerError, pkg.RestMessage{Message: pkg.ErrInternalError.Error()})
 		}
 		return
 	}
@@ -72,12 +72,12 @@ func (adEndpoint *AdvertEndpoint) GetAdvert(c *gin.Context) {
 	advertData, err := adEndpoint.Redis.Find(advertId)
 	if err != nil {
 		switch {
-		case err == pkg.ErrAdvertAlreadyExist:
+		case err == pkg.ErrNotFound:
 			log.Ctx(ctx).Info().Err(err).Msg("The advert already existe")
-			c.JSON(http.StatusBadRequest, err)
+			c.JSON(http.StatusNotFound, pkg.RestMessage{Message: pkg.ErrNotFound.Error()})
 		default:
 			log.Ctx(ctx).Error().Err(err).Msg("unexpected error")
-			c.JSON(http.StatusInternalServerError, pkg.ErrInternalError)
+			c.JSON(http.StatusInternalServerError, pkg.RestMessage{Message: pkg.ErrInternalError.Error()})
 		}
 		return
 	}
