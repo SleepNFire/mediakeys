@@ -7,3 +7,7 @@ type AdvertData struct {
 	Link        string
 	PrintNumber uint64
 }
+
+func (advert *AdvertData) Validation() error {
+	return nil
+}
