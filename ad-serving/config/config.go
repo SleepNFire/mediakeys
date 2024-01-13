@@ -22,7 +22,7 @@ func Default() Config {
 	return Config{
 		Debug: "info",
 		Redis: Redis{
-			Host:       "127.0.0.1",
+			Host:       "redis",
 			Port:       "6379",
 			Expiration: 60 * time.Second,
 		},

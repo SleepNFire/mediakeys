@@ -1,7 +1,28 @@
-version: '1'
+version: '3.8'
 
 services:
+  ad-serving:
+    image: golang:latest
+    volumes:
+      - ./ad-serving/bin/serving:/app/serving
+    working_dir: /app
+    command: /app/serving
+    ports:
+      - "8080"
+      - "8081"
+      - "8082"
+    # environment:
+    depends_on:
+      - redis
+    hostname: ad.docker
+    networks:
+      - arago
+
   redis:
     image: redis:latest
-    ports:
-      - "6379:6379"
+    networks:
+      - arago
+
+networks:
+  arago:
+    driver: bridge
