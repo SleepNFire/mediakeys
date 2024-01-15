@@ -21,13 +21,12 @@ type RedisAccessor struct {
 }
 
 func NewRedisAccessor(globalConf *config.Config) (*RedisAccessor, error) {
-	log.Error().Msg("Redis started")
 	redisAccessor := &RedisAccessor{
 		Config: globalConf.Redis,
 	}
 	client, err := redisAccessor.connectToRedis()
 	if err != nil {
-		log.Error().Err(err).Msg("there is anerror during the connection on redis")
+		log.Error().Err(err).Msg("there is an error during the connection on redis")
 		return nil, pkg.ErrRedisUnaccessible
 	}
 

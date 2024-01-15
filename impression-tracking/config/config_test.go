@@ -21,13 +21,13 @@ func TestInit(t *testing.T) {
 		{
 			name: "custom_conf",
 			environnement: [][]string{
-				{"IMPRESSION_DEBUG", "some_debug"},
+				{"IMPRESSION_LEVEL", "some_debug"},
 				{"IMPRESSION_REDIS_HOST", "custom_localhost"},
 				{"IMPRESSION_REDIS_PORT", "some_port"},
 				{"IMPRESSION_REDIS_EXPIRATION", "5s"},
 			},
 			want: Config{
-				Debug: "some_debug",
+				Level: "some_debug",
 				Redis: Redis{
 					Host:       "custom_localhost",
 					Port:       "some_port",

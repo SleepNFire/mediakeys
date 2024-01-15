@@ -3,6 +3,7 @@ version: '3.8'
 services:
   ad-serving:
     image: golang:latest
+    hostname: ad-serving
     volumes:
       - ./ad-serving/bin/serving:/app/serving
     working_dir: /app
@@ -14,12 +15,32 @@ services:
     # environment:
     depends_on:
       - redis
-    hostname: ad.docker
+      - impression
+    networks:
+      - arago
+
+  impression:
+    image: golang:latest
+    hostname: impression
+    volumes:
+      - ./impression-tracking/bin/impression:/app/impression
+    working_dir: /app
+    command: /app/impression
+    ports:
+      - "8080"
+      - "8081"
+      - "8082"
+    # environment:
+    depends_on:
+      - redis
     networks:
       - arago
 
   redis:
     image: redis:latest
+    hostname: redis
+    ports:
+      - "6379:6379"
     networks:
       - arago
 

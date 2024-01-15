@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net/http"
 
-	"github.com/SleepNFire/mediakeys/impression-tracking/internal/data"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/fx"
 )
@@ -16,6 +15,11 @@ type ginService struct {
 	Technical *gin.Engine
 }
 
+type ApiTechnical interface {
+	RegisterEndpoints(router *gin.Engine)
+	Ping(c *gin.Context)
+}
+
 func newGinService() ginService {
 	gs := ginService{
 		Public:    gin.New(),
@@ -24,6 +28,7 @@ func newGinService() ginService {
 	}
 	gs.Public.Use(gin.Logger())
 	gs.Public.Use(gin.Recovery())
+	gs.Public.BasePath()
 
 	gs.Internal.Use(gin.Logger())
 	gs.Internal.Use(gin.Recovery())
@@ -55,10 +60,11 @@ func NewMicroService(routers ginService) *MicroService {
 	}
 }
 
-func Init(lc fx.Lifecycle, mysql *data.RedisAccessor) (*MicroService, error) {
+func Init(lc fx.Lifecycle, redis ApiTechnical) (*MicroService, error) {
 	routers := newGinService()
 
-	mysql.RegisterEndpoints(routers.Technical)
+	// save different endpoint
+	redis.RegisterEndpoints(routers.Technical)
 
 	ms := NewMicroService(routers)
 

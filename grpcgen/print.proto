@@ -1,0 +1,20 @@
+syntax = "proto3";
+option go_package = "print.grpc";
+
+
+message AdvertID {
+    string id = 1;
+}
+
+message AdvertPrint {
+    uint64 print = 1;
+}
+
+message Error {
+    string error = 1;
+}
+
+service Impression {
+    rpc GetNumber (AdvertID) returns (AdvertPrint) {}
+    rpc Inc (AdvertID) returns (Error) {}
+}

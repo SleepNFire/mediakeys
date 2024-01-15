@@ -14,13 +14,13 @@ type Redis struct {
 }
 
 type Config struct {
-	Debug string
+	Level string // not used
 	Redis Redis
 }
 
 func Default() Config {
 	return Config{
-		Debug: "info",
+		Level: "info",
 		Redis: Redis{
 			Host:       "redis",
 			Port:       "6379",

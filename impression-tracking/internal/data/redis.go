@@ -1,21 +1,19 @@
 package data
 
 import (
-	"errors"
 	"fmt"
 	"net/http"
-	"strconv"
 
 	"github.com/SleepNFire/mediakeys/impression-tracking/config"
+	"github.com/SleepNFire/mediakeys/impression-tracking/pkg"
 	"github.com/gin-gonic/gin"
 	"github.com/go-redis/redis/v8"
+	"github.com/rs/zerolog/log"
 	"golang.org/x/net/context"
 )
 
-const (
-	prefix      = "print"
-	advertising = "advertising"
-)
+const prefix = "printing"
+const advertising = "advertising"
 
 type RedisAccessor struct {
 	Client *redis.Client
@@ -28,8 +26,8 @@ func NewRedisAccessor(globalConf *config.Config) (*RedisAccessor, error) {
 	}
 	client, err := redisAccessor.connectToRedis()
 	if err != nil {
-		fmt.Println("error during connecting to Redis")
-		return nil, errors.New("error during connecting to Redis")
+		log.Error().Interface("config", redisAccessor.Config).Err(err).Msg("there is an error during the connection on redis")
+		return nil, pkg.ErrRedisUnaccessible
 	}
 
 	redisAccessor.Client = client
@@ -49,74 +47,55 @@ func (redisAccessor *RedisAccessor) connectToRedis() (*redis.Client, error) {
 	return client, nil
 }
 
-func CreateKey(id string) string {
-	return fmt.Sprintf("%s:%s", prefix, id)
+func CreateKeys(id string) (key string, advertKey string) {
+	return fmt.Sprintf("%s:%s", prefix, id), fmt.Sprintf("%s:%s", advertising, id)
 }
 
-func CreateAdKey(id string) string {
-	return fmt.Sprintf("%s:%s", advertising, id)
-}
-
-func (redisAccessor *RedisAccessor) AdKeyExist(id string) bool {
-	if exists, _ := redisAccessor.Client.Exists(context.Background(), CreateAdKey(id)).Result(); exists != 0 {
-		return true
-	}
-
-	key := CreateKey(id)
-	if exists, _ := redisAccessor.Client.Exists(context.Background(), key).Result(); exists != 0 {
-		redisAccessor.Client.Del(context.Background(), key)
-	}
-	return false
-}
-
-func (redisAccessor *RedisAccessor) Find(id string) (uint64, error) {
-
-	if !redisAccessor.AdKeyExist(id) {
-		return 0, fmt.Errorf("the advert does not existe")
-	}
-
-	key := CreateKey(id)
-
-	advertValue, err := redisAccessor.Client.Get(context.Background(), key).Result()
+func (redisAccessor *RedisAccessor) Inc(id string) error {
+	key, advertKey := CreateKeys(id)
+	exists, err := redisAccessor.Client.Exists(context.Background(), advertKey).Result()
 	if err != nil {
-		return 0, err
-	}
-
-	advertUint64, err := strconv.ParseUint(advertValue, 10, 64)
-	if err != nil {
-		return 0, err
-	}
-
-	return advertUint64, nil
-}
-
-func (redisAccessor *RedisAccessor) Increment(id string) error {
-
-	if !redisAccessor.AdKeyExist(id) {
-		return fmt.Errorf("the advert does not existe")
-	}
-
-	key := CreateKey(id)
-
-	exists, err := redisAccessor.Client.Exists(context.Background(), key).Result()
-	if err != nil {
+		log.Error().Err(err).Msg("unexpected error")
 		return err
+	} else if exists == 0 {
+		log.Info().Err(err).Msg("Impossible to inc a advert that does exist")
+		redisAccessor.Client.Del(context.Background(), key).Result()
+		return pkg.ErrNotFound
 	}
 
-	if exists == 0 {
-		err := redisAccessor.Client.Set(context.Background(), key, 0, 0).Err()
-		if err != nil {
-			return err
-		}
+	_, err = redisAccessor.Client.Exists(context.Background(), key).Result()
+	if err != nil {
+		log.Error().Err(err).Msg("unexpected error")
 		return nil
 	}
 
-	_, err = redisAccessor.Client.Incr(context.Background(), key).Result()
+	err = redisAccessor.Client.Incr(context.Background(), key).Err()
 	if err != nil {
+		log.Error().Err(err).Msg("error saving the key with data")
 		return err
 	}
 
 	return nil
+}
+func (redisAccessor *RedisAccessor) Find(id string) (uint64, error) {
+	key, advertKey := CreateKeys(id)
+	exists, err := redisAccessor.Client.Exists(context.Background(), advertKey).Result()
+	if err != nil {
+		log.Error().Err(err).Msg("unexpected error")
+		return 0, err
+	} else if exists == 0 {
+		log.Info().Err(err).Msg("Impossible to inc a advert that does exist")
+		redisAccessor.Client.Del(context.Background(), key).Result()
+		return 0, pkg.ErrNotFound
+	}
+
+	value, err := redisAccessor.Client.Get(context.Background(), key).Uint64()
+	if err != redis.Nil && err != nil {
+		log.Error().Err(err).Msg("failed to retrieve value from Redis")
+		return 0, err
+	}
+
+	return value, nil
 }
 
 func (redisAccessor *RedisAccessor) RegisterEndpoints(router *gin.Engine) {
