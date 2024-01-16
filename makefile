@@ -25,4 +25,5 @@ impression_functionnel_test:
 
 
 start: build_serving build_impression
+	docker compose down
 	docker compose up -d

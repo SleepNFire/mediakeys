@@ -1,0 +1,102 @@
+{
+	"info": {
+		"_postman_id": "34b708f7-dbfd-474d-a020-a2fca7c40fbd",
+		"name": "Challenge",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "18242526"
+	},
+	"item": [
+		{
+			"name": "save advert",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"id\":\"some_id\",\n    \"title\":\"some_title\",\n    \"link\":\"some_link\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://ad-serving:8080/api/v1/advert",
+					"protocol": "http",
+					"host": [
+						"ad-serving"
+					],
+					"port": "8080",
+					"path": [
+						"api",
+						"v1",
+						"advert"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get advert",
+			"request": {
+				"method": "GET",
+				"header": []
+			},
+			"response": []
+		},
+		{
+			"name": "increment",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"advert_id\":\"some_id\"\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "http://ad-serving:8080/api/v1/advert/serve",
+					"protocol": "http",
+					"host": [
+						"ad-serving"
+					],
+					"port": "8080",
+					"path": [
+						"api",
+						"v1",
+						"advert",
+						"serve"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "impression",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "http://ad-serving:8080/api/v1/advert/some_id/impression",
+					"protocol": "http",
+					"host": [
+						"ad-serving"
+					],
+					"port": "8080",
+					"path": [
+						"api",
+						"v1",
+						"advert",
+						"some_id",
+						"impression"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}

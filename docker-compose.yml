@@ -15,7 +15,6 @@ services:
       - "8080"
       - "8081"
       - "8082"
-    # environment:
     depends_on:
       - redis
       - impression-tracking
