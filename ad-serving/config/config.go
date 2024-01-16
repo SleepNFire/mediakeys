@@ -13,9 +13,16 @@ type Redis struct {
 	Expiration time.Duration
 }
 
+type Grpc struct {
+	Addr     string
+	Port     string
+	CertPath string
+}
+
 type Config struct {
-	Level string // not used
-	Redis Redis
+	Level      string // not used
+	Redis      Redis
+	Impression Grpc
 }
 
 func Default() Config {
@@ -24,7 +31,12 @@ func Default() Config {
 		Redis: Redis{
 			Host:       "redis",
 			Port:       "6379",
-			Expiration: 60 * time.Second,
+			Expiration: 600 * time.Second,
+		},
+		Impression: Grpc{
+			Addr:     "impression-tracking",
+			Port:     "8503",
+			CertPath: "/app/certificat",
 		},
 	}
 }

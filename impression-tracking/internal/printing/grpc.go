@@ -38,7 +38,7 @@ func (imp *PrintingGrpc) GetNumber(ctx context.Context, key *print_grpc.AdvertID
 	return &print_grpc.AdvertPrint{Print: value}, nil
 }
 
-func (imp *PrintingGrpc) Inc(ctx context.Context, key *print_grpc.AdvertID) (*print_grpc.Error, error) {
+func (imp *PrintingGrpc) Inc(ctx context.Context, key *print_grpc.AdvertID) (*print_grpc.Message, error) {
 	err := imp.Redis.Inc(key.Id)
 	if err != nil {
 		switch err {
@@ -48,5 +48,5 @@ func (imp *PrintingGrpc) Inc(ctx context.Context, key *print_grpc.AdvertID) (*pr
 			return nil, status.Error(codes.Internal, pkg.ErrInternalError.Error())
 		}
 	}
-	return &print_grpc.Error{Error: "SUCCESS"}, nil
+	return &print_grpc.Message{Message: "SUCCESS"}, nil
 }

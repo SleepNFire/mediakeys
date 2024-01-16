@@ -121,7 +121,7 @@ func TestPrintingGrpc_Inc(t *testing.T) {
 		name             string
 		prepareMock      func(mr *printing_mock.MockCacheAccessor)
 		body             *print_grpc.AdvertID
-		expectedResponse *print_grpc.Error
+		expectedResponse *print_grpc.Message
 		expectedErr      error
 	}{
 		{
@@ -130,7 +130,7 @@ func TestPrintingGrpc_Inc(t *testing.T) {
 				mr.EXPECT().Inc("some_id").Return(nil)
 			},
 			body:             &print_grpc.AdvertID{Id: "some_id"},
-			expectedResponse: &print_grpc.Error{Error: "SUCCESS"},
+			expectedResponse: &print_grpc.Message{Message: "SUCCESS"},
 			expectedErr:      nil,
 		},
 		{
@@ -163,7 +163,7 @@ func TestPrintingGrpc_Inc(t *testing.T) {
 			response, err := client.Inc(context.Background(), tt.body)
 			assert.Equal(t, tt.expectedErr, err)
 			if tt.expectedResponse != nil && response != nil {
-				assert.Equal(t, tt.expectedResponse.Error, response.Error)
+				assert.Equal(t, tt.expectedResponse.Message, response.Message)
 			} else if tt.expectedResponse == nil {
 				assert.Nil(t, response)
 			} else {

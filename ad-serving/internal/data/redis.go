@@ -93,6 +93,12 @@ func (redisAccessor *RedisAccessor) Find(id string) (*pkg.AdvertData, error) {
 	return &advert, nil
 }
 
+func (redisAccessor *RedisAccessor) Exist(id string) bool {
+	key := CreateKey(id)
+	exist, _ := redisAccessor.Client.Exists(context.Background(), key).Result()
+	return exist != 0
+}
+
 func (redisAccessor *RedisAccessor) RegisterEndpoints(router *gin.Engine) {
 	router.GET("/redis/health", redisAccessor.Ping)
 }

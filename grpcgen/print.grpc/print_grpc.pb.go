@@ -28,7 +28,7 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type ImpressionClient interface {
 	GetNumber(ctx context.Context, in *AdvertID, opts ...grpc.CallOption) (*AdvertPrint, error)
-	Inc(ctx context.Context, in *AdvertID, opts ...grpc.CallOption) (*Error, error)
+	Inc(ctx context.Context, in *AdvertID, opts ...grpc.CallOption) (*Message, error)
 }
 
 type impressionClient struct {
@@ -48,8 +48,8 @@ func (c *impressionClient) GetNumber(ctx context.Context, in *AdvertID, opts ...
 	return out, nil
 }
 
-func (c *impressionClient) Inc(ctx context.Context, in *AdvertID, opts ...grpc.CallOption) (*Error, error) {
-	out := new(Error)
+func (c *impressionClient) Inc(ctx context.Context, in *AdvertID, opts ...grpc.CallOption) (*Message, error) {
+	out := new(Message)
 	err := c.cc.Invoke(ctx, Impression_Inc_FullMethodName, in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -62,7 +62,7 @@ func (c *impressionClient) Inc(ctx context.Context, in *AdvertID, opts ...grpc.C
 // for forward compatibility
 type ImpressionServer interface {
 	GetNumber(context.Context, *AdvertID) (*AdvertPrint, error)
-	Inc(context.Context, *AdvertID) (*Error, error)
+	Inc(context.Context, *AdvertID) (*Message, error)
 	mustEmbedUnimplementedImpressionServer()
 }
 
@@ -73,7 +73,7 @@ type UnimplementedImpressionServer struct {
 func (UnimplementedImpressionServer) GetNumber(context.Context, *AdvertID) (*AdvertPrint, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetNumber not implemented")
 }
-func (UnimplementedImpressionServer) Inc(context.Context, *AdvertID) (*Error, error) {
+func (UnimplementedImpressionServer) Inc(context.Context, *AdvertID) (*Message, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Inc not implemented")
 }
 func (UnimplementedImpressionServer) mustEmbedUnimplementedImpressionServer() {}

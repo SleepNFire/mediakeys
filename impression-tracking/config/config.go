@@ -1,30 +1,36 @@
 package config
 
 import (
-	"time"
-
 	"github.com/SleepNFire/mediakeys/impression-tracking/pkg"
 	"github.com/kelseyhightower/envconfig"
 )
 
 type Redis struct {
-	Host       string
-	Port       string
-	Expiration time.Duration
+	Host string
+	Port string
 }
 
 type Config struct {
 	Level string // not used
 	Redis Redis
+	Grpc  Grpc
+}
+
+type Grpc struct {
+	CertPath string
+	Port     string
 }
 
 func Default() Config {
 	return Config{
 		Level: "info",
 		Redis: Redis{
-			Host:       "redis",
-			Port:       "6379",
-			Expiration: 60 * time.Second,
+			Host: "redis",
+			Port: "6379",
+		},
+		Grpc: Grpc{
+			CertPath: "/app/certificat",
+			Port:     "8503",
 		},
 	}
 }

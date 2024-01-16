@@ -3,7 +3,6 @@ package config
 import (
 	"os"
 	"testing"
-	"time"
 
 	"github.com/stretchr/testify/assert"
 )
@@ -24,14 +23,18 @@ func TestInit(t *testing.T) {
 				{"IMPRESSION_LEVEL", "some_debug"},
 				{"IMPRESSION_REDIS_HOST", "custom_localhost"},
 				{"IMPRESSION_REDIS_PORT", "some_port"},
-				{"IMPRESSION_REDIS_EXPIRATION", "5s"},
+				{"IMPRESSION_GRPC_CERTPATH", "some_path"},
+				{"IMPRESSION_GRPC_PORT", "some_port_2"},
 			},
 			want: Config{
 				Level: "some_debug",
 				Redis: Redis{
-					Host:       "custom_localhost",
-					Port:       "some_port",
-					Expiration: 5 * time.Second,
+					Host: "custom_localhost",
+					Port: "some_port",
+				},
+				Grpc: Grpc{
+					CertPath: "some_path",
+					Port:     "some_port_2",
 				},
 			},
 		},

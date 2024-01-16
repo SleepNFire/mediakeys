@@ -17,8 +17,9 @@ import (
 func TestAdvertEndpoint_SaveAdvert(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	mockRedis := advert_mock.NewMockCacheAccessor(ctrl)
+	mockImp := advert_mock.NewMockImpressionAccessor(ctrl)
 
-	ad, err := NewAdvertEndpoint(mockRedis)
+	ad, err := NewAdvertEndpoint(mockRedis, mockImp)
 	assert.NoError(t, err)
 
 	endpoint := gin.New()
@@ -138,8 +139,9 @@ func TestAdvertEndpoint_SaveAdvert(t *testing.T) {
 func TestAdvertEndpoint_GetAdvert(t *testing.T) {
 	ctrl := gomock.NewController(t)
 	mockRedis := advert_mock.NewMockCacheAccessor(ctrl)
+	mockImp := advert_mock.NewMockImpressionAccessor(ctrl)
 
-	ad, err := NewAdvertEndpoint(mockRedis)
+	ad, err := NewAdvertEndpoint(mockRedis, mockImp)
 	assert.NoError(t, err)
 
 	endpoint := gin.New()
@@ -206,6 +208,204 @@ func TestAdvertEndpoint_GetAdvert(t *testing.T) {
 				SetResult(&response).
 				SetError(&errApi).
 				Get(fmt.Sprintf("%s/api/v1/advert/{id}", srv.URL))
+
+			assert.NoError(t, err)
+			assert.Equal(t, tt.expectedCode, resp.StatusCode())
+
+			switch resp.StatusCode() {
+			case http.StatusOK:
+				assert.Equal(t, tt.expectedResponse, response)
+			default:
+				assert.Equal(t, tt.expectedErr, errApi)
+			}
+		})
+	}
+}
+
+func TestAdvertEndpoint_GetImpression(t *testing.T) {
+
+	ctrl := gomock.NewController(t)
+	mockRedis := advert_mock.NewMockCacheAccessor(ctrl)
+	mockImp := advert_mock.NewMockImpressionAccessor(ctrl)
+
+	ad, err := NewAdvertEndpoint(mockRedis, mockImp)
+	assert.NoError(t, err)
+
+	endpoint := gin.New()
+	ad.RegisterEndpoints(endpoint)
+
+	srv := httptest.NewServer(endpoint)
+	defer srv.Close()
+
+	tests := []struct {
+		name             string
+		param            string
+		prepareMock      func(mr *advert_mock.MockCacheAccessor, mi *advert_mock.MockImpressionAccessor)
+		expectedCode     int
+		expectedResponse AdvertImp
+		expectedErr      pkg.RestMessage
+	}{
+		{
+			name:  "Error not found",
+			param: "some_param",
+			prepareMock: func(mr *advert_mock.MockCacheAccessor, mi *advert_mock.MockImpressionAccessor) {
+				mr.EXPECT().Find("some_param").Return(nil, pkg.ErrNotFound)
+			},
+			expectedCode: 404,
+			expectedErr:  pkg.RestMessage{Message: pkg.ErrNotFound.Error()},
+		},
+		{
+			name:  "internal error",
+			param: "some_param",
+			prepareMock: func(mr *advert_mock.MockCacheAccessor, mi *advert_mock.MockImpressionAccessor) {
+				mr.EXPECT().Find("some_param").Return(nil, pkg.ErrInternalError)
+			},
+			expectedCode: 500,
+			expectedErr:  pkg.RestMessage{Message: pkg.ErrInternalError.Error()},
+		},
+		{
+			name:  "partiel success",
+			param: "some_param",
+			prepareMock: func(mr *advert_mock.MockCacheAccessor, mi *advert_mock.MockImpressionAccessor) {
+				mr.EXPECT().Find("some_param").Return(&pkg.AdvertData{
+					Id:    "some_id",
+					Title: "some_title",
+					Link:  "some_url",
+				}, nil)
+				mi.EXPECT().GetNumber("some_param").Return("unknown", fmt.Errorf("some_error"))
+			},
+			expectedCode: 200,
+			expectedResponse: AdvertImp{
+				ImpressionUrl:    "some_url",
+				ImpressionNumber: "some_error",
+			},
+		},
+		{
+			name:  "success",
+			param: "some_param",
+			prepareMock: func(mr *advert_mock.MockCacheAccessor, mi *advert_mock.MockImpressionAccessor) {
+				mr.EXPECT().Find("some_param").Return(&pkg.AdvertData{
+					Id:    "some_id",
+					Title: "some_title",
+					Link:  "some_url",
+				}, nil)
+				mi.EXPECT().GetNumber("some_param").Return("10", nil)
+			},
+			expectedCode: 200,
+			expectedResponse: AdvertImp{
+				ImpressionUrl:    "some_url",
+				ImpressionNumber: "10",
+			},
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var response AdvertImp
+			var errApi pkg.RestMessage
+
+			tt.prepareMock(mockRedis, mockImp)
+
+			client := resty.New()
+
+			resp, err := client.R().
+				SetPathParam("id", tt.param).
+				SetResult(&response).
+				SetError(&errApi).
+				Get(fmt.Sprintf("%s/api/v1/advert/{id}/impression", srv.URL))
+
+			assert.NoError(t, err)
+			assert.Equal(t, tt.expectedCode, resp.StatusCode())
+
+			switch resp.StatusCode() {
+			case http.StatusOK:
+				assert.Equal(t, tt.expectedResponse, response)
+			default:
+				assert.Equal(t, tt.expectedErr, errApi)
+			}
+		})
+	}
+}
+
+func TestAdvertEndpoint_ServeAd(t *testing.T) {
+	ctrl := gomock.NewController(t)
+	mockRedis := advert_mock.NewMockCacheAccessor(ctrl)
+	mockImp := advert_mock.NewMockImpressionAccessor(ctrl)
+
+	ad, err := NewAdvertEndpoint(mockRedis, mockImp)
+	assert.NoError(t, err)
+
+	endpoint := gin.New()
+	ad.RegisterEndpoints(endpoint)
+
+	srv := httptest.NewServer(endpoint)
+	defer srv.Close()
+
+	tests := []struct {
+		name             string
+		body             interface{}
+		prepareMock      func(mr *advert_mock.MockCacheAccessor, mi *advert_mock.MockImpressionAccessor)
+		expectedCode     int
+		expectedResponse string
+		expectedErr      pkg.RestMessage
+	}{
+		{
+			name: "Error not found",
+			body: pkg.AdvertId{Id: "some_param"},
+			prepareMock: func(mr *advert_mock.MockCacheAccessor, mi *advert_mock.MockImpressionAccessor) {
+				mr.EXPECT().Exist("some_param").Return(false)
+			},
+			expectedCode: 404,
+			expectedErr:  pkg.RestMessage{Message: pkg.ErrNotFound.Error()},
+		},
+		{
+			name:         "Error bad request",
+			body:         nil,
+			prepareMock:  func(mr *advert_mock.MockCacheAccessor, mi *advert_mock.MockImpressionAccessor) {},
+			expectedCode: 400,
+			expectedErr:  pkg.RestMessage{Message: pkg.ErrObjectUnknown.Error()},
+		},
+		{
+			name:         "Error bad request",
+			body:         pkg.AdvertId{Id: ""},
+			prepareMock:  func(mr *advert_mock.MockCacheAccessor, mi *advert_mock.MockImpressionAccessor) {},
+			expectedCode: 400,
+			expectedErr:  pkg.RestMessage{Message: "no advert id"},
+		},
+		{
+			name: "internal error",
+			body: pkg.AdvertId{Id: "some_param"},
+			prepareMock: func(mr *advert_mock.MockCacheAccessor, mi *advert_mock.MockImpressionAccessor) {
+				mr.EXPECT().Exist("some_param").Return(true)
+				mi.EXPECT().Inc("some_param").Return("", fmt.Errorf("some_error"))
+			},
+			expectedCode: 500,
+			expectedErr:  pkg.RestMessage{Message: pkg.ErrInternalError.Error()},
+		},
+		{
+			name: "success",
+			body: pkg.AdvertId{Id: "some_param"},
+			prepareMock: func(mr *advert_mock.MockCacheAccessor, mi *advert_mock.MockImpressionAccessor) {
+				mr.EXPECT().Exist("some_param").Return(true)
+				mi.EXPECT().Inc("some_param").Return("success", nil)
+			},
+			expectedCode:     200,
+			expectedResponse: "success",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var response string
+			var errApi pkg.RestMessage
+
+			tt.prepareMock(mockRedis, mockImp)
+
+			client := resty.New()
+
+			resp, err := client.R().
+				SetBody(tt.body).
+				SetResult(&response).
+				SetError(&errApi).
+				Post(fmt.Sprintf("%s/api/v1/advert/serve", srv.URL))
 
 			assert.NoError(t, err)
 			assert.Equal(t, tt.expectedCode, resp.StatusCode())

@@ -9,6 +9,10 @@ type AdvertData struct {
 	Link        string  `json:"link"`
 }
 
+type AdvertId struct {
+	Id string `json:"advert_id"`
+}
+
 func (advert *AdvertData) Validation() error {
 	if advert.Id == "" {
 		return fmt.Errorf("there is no Id")

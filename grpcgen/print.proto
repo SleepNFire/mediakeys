@@ -10,11 +10,11 @@ message AdvertPrint {
     uint64 print = 1;
 }
 
-message Error {
-    string error = 1;
+message Message {
+    string message = 1;
 }
 
 service Impression {
     rpc GetNumber (AdvertID) returns (AdvertPrint) {}
-    rpc Inc (AdvertID) returns (Error) {}
+    rpc Inc (AdvertID) returns (Message) {}
 }

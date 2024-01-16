@@ -25,6 +25,9 @@ func TestInit(t *testing.T) {
 				{"ADSERVING_REDIS_HOST", "custom_localhost"},
 				{"ADSERVING_REDIS_PORT", "some_port"},
 				{"ADSERVING_REDIS_EXPIRATION", "5s"},
+				{"ADSERVING_IMPRESSION_ADDR", "some_addr"},
+				{"ADSERVING_IMPRESSION_CERTPATH", "some_path"},
+				{"ADSERVING_IMPRESSION_PORT", "some_port_2"},
 			},
 			want: Config{
 				Level: "some_debug",
@@ -32,6 +35,11 @@ func TestInit(t *testing.T) {
 					Host:       "custom_localhost",
 					Port:       "some_port",
 					Expiration: 5 * time.Second,
+				},
+				Impression: Grpc{
+					Addr:     "some_addr",
+					Port:     "some_port_2",
+					CertPath: "some_path",
 				},
 			},
 		},
